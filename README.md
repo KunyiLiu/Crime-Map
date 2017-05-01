@@ -15,8 +15,11 @@ During the period of final project, I have done some research on crime maps. As 
    Flash Face lets you become a sketch artist. Choose hair, head, eyebrows, and all the other details of the face to compose your own criminal sketch. Export and print to create a wanted poster of that neighbor you don’t like.
    
 ## Approached to Draw Crime Maps
-### Web App tutorial
-![web app]()
+ * [Web App Tutorial](https://www.dataiku.com/learn/guide/tutorials/draw-sfdp-map.html)
+![web app](web_app.jpg)
+
+* [tableau](https://www.tableau.com/solutions/gallery/crime-spotting)
+
    
   
   
