@@ -4,11 +4,10 @@ Matplotlib is a Python 2D plotting library which produces publication quality fi
 Here are some resources which might be useful.
 
 * [matplotlib tutorial](https://github.com/rougier/matplotlib-tutorial)
-
- The tutorial includes Simple plot , Figures, Subplots, Axes and Ticks , Animation and Other Types of Plots. 
+   The tutorial includes Simple plot , Figures, Subplots, Axes and Ticks , Animation and Other Types of Plots. 
+   
+* Lecture about matplotlib techniques
  
- * Lecture about matplotlib techniques
- 
- 1. [aml03012517_notes.pdf]()
- 2. [aml03012517.ipynb]()
+ 1. [aml03012517_notes.pdf](aml03012517_notes.pdf)
+ 2. [aml03012517.ipynb](aml03012517.ipynb)
 
