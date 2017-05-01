@@ -8,5 +8,10 @@ Here are some resources which might be useful.
    
 * Lecture about matplotlib techniques
    1. [aml03012517_notes.pdf](https://github.com/KunyiLiu/Crime-Map/blob/master/aml-03-012517_notes.pdf)
-   2. [aml03012517.ipynb](https://github.com/KunyiLiu/Crime-Map/blob/master/aml03012517.ipynb)
+   2. [aml03012517.ipynb](https://github.com/KunyiLiu/Crime-Map/blob/master/aml-03-012517.ipynb)
+   
+* Videos
+   1. [Matplotlib Tutorial Series - Graphing in Python](https://www.youtube.com/watch?v=q7Bo_J8x_dw&list=PLQVvvaa0QuDfefDfXb9Yf0la1fPDKluPF)
+   2. [3D Graphs in Matplotlib for Python: Basic 3D Line](https://www.youtube.com/watch?v=ZlpFQNVhB7I&list=PLQVvvaa0QuDe60TfxLrJzdQEacMEItxl-)
+   3. [3D Heatmaps and Subplotting using Matplotlib and Seaborn (Subscriber Request)](https://www.youtube.com/watch?v=NHwXkvwSd7E)
 
