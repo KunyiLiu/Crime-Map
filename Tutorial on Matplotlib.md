@@ -7,6 +7,6 @@ Here are some resources which might be useful.
    The tutorial includes Simple plot , Figures, Subplots, Axes and Ticks , Animation and Other Types of Plots. 
    
 * Lecture about matplotlib techniques
-   1. [aml03012517_notes.pdf](https://github.com/KunyiLiu/Crime-Map/blob/master/aml03012517_notes.pdf)
+   1. [aml03012517_notes.pdf](https://github.com/KunyiLiu/Crime-Map/blob/master/aml-03-012517_notes.pdf)
    2. [aml03012517.ipynb](https://github.com/KunyiLiu/Crime-Map/blob/master/aml03012517.ipynb)
 
