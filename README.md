@@ -19,7 +19,7 @@ During the period of final project, I have done some research on crime maps. As 
 ![web app](web_app.jpg)
 
 * [tableau](https://www.tableau.com/solutions/gallery/crime-spotting)
-![tableau](tableau.jpg)
+![tableau](tableau.JPG)
 
  * [Rmap package](https://github.com/ramnathv/rMaps)
  
@@ -28,6 +28,8 @@ During the period of final project, I have done some research on crime maps. As 
  * [Interative Map with d3](https://github.com/KunyiLiu/quant-hack)
  
   The project was developed with the Python and JavaScript programming languages. The deliverable is an interactive document provided in the form of a Jupyter notebook with advanced interactive visualizations based on leafletjs, bqplot, d3.js
+  
+Hope you enjoy!
  
  
 
