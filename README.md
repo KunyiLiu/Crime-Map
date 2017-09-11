@@ -32,7 +32,7 @@ During the period of final project, I have done some research on crime maps. As 
   
 Hope you enjoy!
 
-![image](https://www.flickr.com/photos/149453710@N04/36321726994)
+![image](https://snag.gy/jta2gB.jpg)
  
  
 
