@@ -31,6 +31,8 @@ During the period of final project, I have done some research on crime maps. As 
   The project was developed with the Python and JavaScript programming languages. The deliverable is an interactive document provided in the form of a Jupyter notebook with advanced interactive visualizations based on leafletjs, bqplot, d3.js
   
 Hope you enjoy!
+
+![image](https://www.flickr.com/photos/149453710@N04/36321726994)
  
  
 
