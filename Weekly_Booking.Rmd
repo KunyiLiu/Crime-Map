@@ -1,0 +1,354 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(gridExtra)
+library(RColorBrewer)
+library(scales)
+library(lubridate)
+library(grid)
+library(ggthemes)
+library(datetime)
+library(zoo)
+```
+
+
+```{r}
+week_per <- read_csv("C:/Users/Kunyi Liu/Desktop/H/internship/Knotel/SlamData/Week_Room_Per.csv")
+week_diff <-read_csv("C:/Users/Kunyi Liu/Desktop/H/internship/Knotel/SlamData/Week_Room_Diff.csv")
+week_ab <- read_csv("C:/Users/Kunyi Liu/Desktop/H/internship/Knotel/SlamData/Week_Room_Table.csv")
+```
+
+```{r}
+## get average line plot for absolute value and 
+colnames(week_ab)[1:6] <- week_ab[3, c(1:6)]
+week_header <- week_ab[c(1:3),]
+week_ab <- week_ab[-c(1:3),]
+str(week_ab)
+```
+```{r,fig.width=15,fig.height=10,dpi=300, out.width="1920px",out.height="1080px"}
+# transform wide to long table
+ab_long <- gather(week_ab, Week, Count, "Week 1":"Week 43", factor_key=TRUE)
+ab_long$Count <- as.numeric(ab_long$Count)
+ab_long$Chair_Count <- as.numeric(ab_long$Chair_Count)
+ab_long$Week <- as.numeric(ab_long$Week)
+ix <- c(seq(1,4),6)
+ab_long[ix] <- lapply(ab_long[ix], as.factor) 
+ab_long <- ab_long[complete.cases(ab_long),]
+
+# reorder the levels in factor floor
+levels(ab_long$Floor) <- c("2", "21", "26", "3", "4", "5", "6", "8")
+ab_long$Floor <- factor(ab_long$Floor, levels(ab_long$Floor)[c(1,4:8,2:3)])
+
+```
+
+
+```{r}
+#ab_long %>% group_by(Size, Week) %>% do(mutate(., Count = sum(Count), Room_Num =  n_distinct(Room)))
+ab_group <- ab_long %>% group_by(Size, Week) %>% dplyr::summarise( Count = sum(Count), Avg = sum(Count)/ n_distinct(Room))
+```
+
+## Bookings Sum by Room Size
+```{r}
+p1 <- ggplot(ab_group, aes(Week, Count, color = Size)) +
+           geom_line(na.rm=TRUE, size= 1)+
+           scale_y_continuous(breaks = seq(0,350, 50), limits = c(0,350))+
+           scale_x_continuous( expand = c(0,0),
+                             breaks = seq(1, 43, 10),
+                             labels = paste("Week", unique(ab_long$Week)[seq(1, 43, 10)], sep = ""))+
+           labs(title = "", x = "", y = "") +
+           scale_color_brewer(palette = "Set2")
+           theme(legend.position= "right",
+             # panel.grid.minor = element_blank(),panel.grid.major = element_blank(),
+             #axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 10, angle= 0 , hjust = 0.5, vjust = 0.5, colour = "steelblue4"),
+             axis.text.y = element_text(size = 12,  colour = "steelblue4"),
+             plot.margin = unit(c(.1, 1.1, .1, .1), "cm"))+
+           theme(plot.background = element_rect(fill = "grey86", colour = "grey86"))
+           theme(panel.spacing.x=unit(1, "lines"),panel.spacing.y=unit(.5, "lines"))
+```
+## Bookings Mean by Room Size
+```{r}
+p2 <- ggplot(ab_group, aes(Week, Avg, color = Size)) +
+           geom_line(na.rm=TRUE, size= 1)+
+           scale_y_continuous(breaks = seq(0,30, 5), limits = c(0,30))+
+           scale_x_continuous( expand = c(0,0),
+                             breaks = seq(1, 43, 10),
+                             labels = paste("Week", unique(ab_long$Week)[seq(1, 43, 10)], sep = ""))+
+           labs(title = "", x = "", y = "") +
+           scale_color_brewer(palette = "Set2")
+           theme(legend.position= "right",
+             # panel.grid.minor = element_blank(),panel.grid.major = element_blank(),
+             #axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 10, angle= 0 , hjust = 0.5, vjust = 0.5, colour = "steelblue4"),
+             axis.text.y = element_text(size = 12,  colour = "steelblue4"),
+             plot.margin = unit(c(.1, 1.1, .1, .1), "cm"))+
+           theme(plot.background = element_rect(fill = "grey86", colour = "grey86"))
+           theme(panel.spacing.x=unit(1, "lines"),panel.spacing.y=unit(.5, "lines"))
+
+```
+```{r}
+grid.arrange(p1,p2)
+```
+```{r}
+## append the property and floor pairs that do not eixst
+a <- ab_long %>% group_by(Property, Floor) %>% summarize( has = n_distinct(Count))
+dummy <- merge(unique(ab_long$Property), unique(ab_long$Floor))
+dummy <- merge(dummy, a, by.x = c("x","y"), by.y = c("Property", "Floor"), all.x = TRUE)
+dummy[is.na(dummy$has), ]$has <- 0
+colnames(dummy) <- c("Property", "Floor", "has")
+dummy$Week <- 0
+dummy$Count <- 0
+```
+
+
+```{r,fig.width=20,fig.height=10,dpi=300, out.width="1920px",out.height="1080px"}
+
+ggplot(ab_long) +
+           geom_line(aes(Week, Count, group = Room, color = Size), na.rm=TRUE, size= 1)+
+           facet_grid( Floor~Property ,  scales = "fixed", drop = TRUE )+
+           geom_rect(data = subset(dummy, has == 0), fill = "grey86", colour = "grey86", xmin = -Inf,xmax = Inf,
+            ymin = -Inf, ymax = Inf,alpha = 1)+
+           scale_y_continuous(breaks = seq(0,50,10))+
+           scale_x_continuous( 
+                             breaks = seq(1, 43, 10),
+                             labels = paste("Week", unique(ab_long$Week)[seq(1, 43, 10)], sep = ""))+
+           labs(title = "", x = "", y = "") +
+           scale_color_brewer(palette = "Set2") +
+           theme(legend.position= "none",
+              strip.text.x = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+              strip.text.y = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+             # panel.grid.minor = element_blank(),panel.grid.major = element_blank(),
+             #axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 10, angle= 0 , hjust = 0.5, vjust = 0.5, colour = "steelblue4"),
+             axis.text.y = element_text(size = 12,  colour = "steelblue4"),
+             plot.margin = unit(c(.1, 1.1, .1, .1), "cm"))+
+           theme(plot.background = element_rect(fill = "grey86", colour = "grey86"))
+           theme(panel.spacing.x=unit(1, "lines"),panel.spacing.y=unit(.5, "lines"))
+```
+### Try using facet_wrap ignoring the order of floors
+
+```{r}
+demp <- dummy[dummy$has == 0, ]
+demp[c("Address", "Room", "Chair_Count", "Size")] <- NA
+demp<- demp[, c(1,6,2,7,8,9,4,5)]
+demp <- rbind(ab_long, demp)
+demp$PropFloor <- paste(lapply(demp$Property, as.character), lapply(demp$Floor, as.character), sep = '-')
+print(dim(demp))
+#demp$PropFloor <- factor(demp$PropFloor, levels = unique(demp$PropFloor[order(demp$Property, demp$Count, decreasing = T)]) )
+demp %<>% group_by(Property) %>% filter(PropFloor %in% unique(PropFloor[order(Count, decreasing = T)])[1:4]) 
+# reorder levels
+dlevels <- c("Union Sq 1-2", "Union Sq 1-5", "Union Sq 1-6", "Union Sq 1-8", "Houston-2", "Houston-3", "Houston-4", "Houston-5",
+            "Herald Square-21", "Herald Square-2", "Herald Square-3", "Herald Square-4", "Cooper Square-4",  "Cooper Square-6",  "Cooper Square-2",  "Cooper Square-3",
+            "Bryant-3", "Bryant-5", "Bryant-6", "Bryant-2", "Battery-26", "Battery-2", "Battery-3", "Battery-4")
+demp$PropFloor <- factor(demp$PropFloor, levels = dlevels )
+print(dim(demp))
+#levels(as.factor(demp$PropFloor))
+```
+
+```{r}
+# change labels in facet_wrap
+to_string <- as_labeller(c("Union Sq 1-2" = "Union Sq 1-2", "Union Sq 1-5" = "Union Sq 1-5", "Union Sq 1-6" = "Union Sq 1-6", "Union Sq 1-8" = "Union Sq 1-8",
+                           "Houston-2" = "Houston-2", "Houston-3" = "Houston-3", "Houston-4" = "", "Houston-5" = "",
+            "Herald Square-21" = "Herald Square-21", "Herald Square-2" = "", "Herald Square-3" = "", "Herald Square-4" = "", 
+            "Cooper Square-4" = "Cooper Square-4",  "Cooper Square-6" = "Cooper Square-6",  "Cooper Square-2" = "",  "Cooper Square-3" = "",
+            "Bryant-3" = "Bryant-3", "Bryant-5" = "Bryant-5", "Bryant-6" = "Bryant-6", "Bryant-2" = "", 
+            "Battery-26" = "Battery-26", "Battery-2" = "", "Battery-3" = "", "Battery-4" = ""))
+myfunction <- function(var, string ) {
+  print(var)
+  print(string)
+  if (string %in% dlevels[c(7,8,10:12,15:16,20,22:24)]){
+    result <- ""}
+  else{
+    result <- string
+    }
+  
+  return(result)
+}
+
+```
+
+```{r,fig.width=15,fig.height=10,dpi=300, out.width="1920px",out.height="1080px"}
+
+ggplot(demp) +
+           geom_line(aes(Week, Count, group = Room, color = Size), na.rm=TRUE, size= 1)+
+           facet_wrap( ~PropFloor ,  scales = "fixed", drop = TRUE, ncol = 4 ,labeller = to_string)+
+           geom_rect(data = subset(demp, Week == 0), fill = "grey86", colour = "grey86", xmin = -Inf,xmax = Inf,
+            ymin = -Inf, ymax = Inf,alpha = 1)+
+           scale_y_continuous(breaks = seq(0,50,10))+
+           scale_x_continuous( 
+                             breaks = seq(1, 43, 10),
+                             labels = paste("Week", unique(ab_long$Week)[seq(1, 43, 10)], sep = ""))+
+           labs(title = "", x = "", y = "") +
+           scale_color_brewer(palette = "Set2") +
+           theme(legend.position= "bottom",
+              strip.text.x = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+              strip.text.y = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+             # panel.grid.minor = element_blank(),panel.grid.major = element_blank(),
+             #axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 10, angle= 0 , hjust = 0.5, vjust = 0.5, colour = "steelblue4"),
+             axis.text.y = element_text(size = 12,  colour = "steelblue4"),
+             plot.margin = unit(c(.1, 1.1, .1, .1), "cm"))+
+           theme(plot.background = element_rect(fill = "grey86", colour = "grey86"))
+           theme(panel.spacing.x=unit(1, "lines"),panel.spacing.y=unit(.5, "lines"))
+```
+
+
+
+## Week Diff
+```{r}
+colnames(week_diff)[1:6] <- week_diff[3, c(1:6)]
+#week_header <- week_ab[c(1:3),]
+week_diff <- week_diff[-c(1:3),]
+str(week_diff)
+```
+
+
+```{r}
+# transform wide to long table
+ab_diff <- gather(week_diff, Week, Count, "Week 2":"Week 43", factor_key=TRUE)
+ab_diff$Count <- as.numeric(ab_diff$Count)
+ab_diff$Chair_Count <- as.numeric(ab_diff$Chair_Count)
+ab_diff$Week <- as.numeric(ab_diff$Week)
+ix <- c(seq(1,4),6)
+ab_diff[ix] <- lapply(ab_diff[ix], as.factor) 
+ab_diff <- ab_diff[complete.cases(ab_diff),]
+
+# reorder the levels in factor floor
+levels(ab_diff$Floor) <- c("2", "21", "26", "3", "4", "5", "6", "8")
+ab_diff$Floor <- factor(ab_diff$Floor, levels(ab_diff$Floor)[c(1,4:8,2:3)])
+
+```
+
+```{r,fig.width=20,fig.height=10,dpi=300, out.width="1920px",out.height="1080px"}
+
+ggplot(ab_diff, aes(Week, Count, color = Room)) +
+           geom_line(na.rm=TRUE, size= 1)+
+           geom_hline( aes(yintercept = 0), size = .8, col = "black")+
+           facet_grid( Floor~Property ,  scales = "fixed", drop = TRUE )+
+           scale_y_continuous(breaks = seq(-30,30,10), limits = c(-30, 30))+
+           scale_x_continuous( breaks = seq(1, 42, 10),
+                             labels = paste("Week", unique(ab_long$Week)[seq(2, 43, 10)], sep = ""))+
+           labs(title = "", x = "", y = "") +
+           #scale_color_brewer(palette = "Set2")
+           theme(legend.position= "none",
+              strip.text.x = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+              strip.text.y = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+             # panel.grid.minor = element_blank(),panel.grid.major = element_blank(),
+             #axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 10, angle= 0 , hjust = 0.5, vjust = 0.5, colour = "steelblue4"),
+             axis.text.y = element_text(size = 12,  colour = "steelblue4"),
+             plot.margin = unit(c(.1, 1.1, .1, .1), "cm"))+
+           theme(plot.background = element_rect(fill = "grey86", colour = "grey86"))
+           theme(panel.spacing.x=unit(1.2, "lines"),panel.spacing.y=unit(.5, "lines"))
+```
+
+
+
+```{r,fig.width=20,fig.height=10,dpi=300, out.width="1920px",out.height="1080px"}
+
+ggplot(ab_diff, aes(Week, Count)) +
+           geom_bar( aes(fill = Room, group = Room), colour = "grey", size = .6, stat = "identity", position = 'dodge',width=1)+
+           facet_wrap(~Room ,  scales = "fixed", drop = TRUE )+
+           scale_y_continuous(breaks = seq(-30,30,10), limits = c(-30, 30))+
+           scale_x_continuous( breaks = seq(1, 42, 10),
+                             labels = paste("Week", unique(ab_long$Week)[seq(2, 43, 10)], sep = ""))+
+           labs(title = "", x = "", y = "") +
+           #scale_color_brewer(palette = "Set2")
+           theme(legend.position= "none",
+              strip.text.x = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+              strip.text.y = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+             # panel.grid.minor = element_blank(),panel.grid.major = element_blank(),
+             #axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 10, angle= 0 , hjust = 0.5, vjust = 0.5, colour = "steelblue4"),
+             axis.text.y = element_text(size = 12,  colour = "steelblue4"),
+             plot.margin = unit(c(.1, 1.1, .1, .1), "cm"))+
+           theme(plot.background = element_rect(fill = "grey86", colour = "grey86"))
+           theme(panel.spacing.x=unit(1.2, "lines"),panel.spacing.y=unit(.5, "lines"))
+```
+```{r}
+## get average line plot for absolute value and 
+colnames(week_per)[1:6] <- week_per[3, c(1:6)]
+week_per <- week_per[-c(1:3),]
+str(week_per){r}
+```
+```
+# transform wide to long table
+ab_per <- gather(week_per, Week, Count, "Week 2":"Week 43", factor_key=TRUE, na.rm = FALSE)
+ab_per$Count <- as.numeric(ab_per$Count)
+ab_per$Chair_Count <- as.numeric(ab_per$Chair_Count)
+ab_per$Week <- as.numeric(ab_per$Week)
+ix <- c(seq(1,4),6)
+ab_per[ix] <- lapply(ab_per[ix], as.factor) 
+ab_per <- ab_per[complete.cases(ab_per),]
+
+# reorder the levels in factor floor
+levels(ab_per$Floor) <- c("2", "21", "26", "3", "4", "5", "6", "8")
+ab_per$Floor <- factor(ab_per$Floor, levels(ab_per$Floor)[c(1,4:8,2:3)])
+
+```
+```{r}
+percent_vec = paste(1:100, "%", sep = "")
+as.numeric(sub("%", "", percent_vec))/100
+lapply(ab_per[ix], function(x){as.factor})
+```
+
+
+```{r,fig.width=20,fig.height=15,dpi=300, out.width="1920px",out.height="1080px"}
+# differentiate positive/negative by color
+ab_per$colour <- ifelse(ab_per$Count < 0, "negative","positive")
+
+ggplot(ab_per, aes(Week, Count)) +
+           geom_bar( aes(fill = as.factor(colour), group = Room), colour = "grey", size = .6, stat = "identity", position = 'dodge',width=1)+
+           facet_wrap(~Room ,  scales = "fixed", drop = TRUE )+
+           scale_y_continuous(breaks = seq(-30,30, 1), limits = c(-30, 30))+
+           scale_x_continuous( breaks = seq(1, 42, 10),
+                             labels = paste("Week", unique(ab_long$Week)[seq(2, 43, 10)], sep = ""))+
+           labs(title = "", x = "", y = "") +
+           scale_fill_manual( values=c(positive="green4",negative="firebrick1"))+
+           #scale_color_brewer(palette = "Set2")
+            coord_cartesian(ylim=c(-2, 2)) +
+           theme(legend.position= "none",
+              strip.text.x = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+              strip.text.y = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+             # panel.grid.minor = element_blank(),panel.grid.major = element_blank(),
+             #axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 8, angle= 0 , hjust = 0.5, vjust = 0.5, colour = "steelblue4"),
+             axis.text.y = element_text(size = 12,  colour = "steelblue4"),
+             plot.margin = unit(c(.1, 1.1, .1, .1), "cm"))+
+           theme(plot.background = element_rect(fill = "grey86", colour = "grey86"))
+           theme(panel.spacing.x=unit(1.2, "lines"),panel.spacing.y=unit(.5, "lines"))
+```
+```{r,fig.width=20,fig.height=15,dpi=300, out.width="1920px",out.height="1080px"}
+# differentiate positive/negative by color
+ab_per$colour <- ifelse(ab_per$Count < 0, "negative","positive")
+
+ggplot(ab_per, aes(Week, Count)) +
+           geom_bar( aes(fill = as.factor(colour), group = Room), colour = "grey", size = .6, stat = "identity", position = 'stack',width=1)+
+           facet_grid( Floor~Property ,  scales = "fixed", drop = TRUE )+
+           scale_y_continuous(breaks = seq(-30,30, 1), limits = c(-30, 30))+
+           scale_x_continuous( breaks = seq(1, 42, 10),
+                             labels = paste("Week", unique(ab_long$Week)[seq(2, 43, 10)], sep = ""))+
+           labs(title = "", x = "", y = "") +
+           scale_fill_manual( values=c(positive="green4",negative="firebrick1"))+
+           #scale_color_brewer(palette = "Set2")
+            coord_cartesian(ylim=c(-2, 2)) +
+           theme(legend.position= "none",
+              strip.text.x = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+              strip.text.y = element_text(size = 15, colour = "steelblue4", angle = 0, face = 'bold'),
+             # panel.grid.minor = element_blank(),panel.grid.major = element_blank(),
+             #axis.ticks = element_blank(),
+             axis.text.x = element_text(size = 8, angle= 0 , hjust = 0.5, vjust = 0.5, colour = "steelblue4"),
+             axis.text.y = element_text(size = 12,  colour = "steelblue4"),
+             plot.margin = unit(c(.1, 1.1, .1, .1), "cm"))+
+           theme(plot.background = element_rect(fill = "grey86", colour = "grey86"))
+           theme(panel.spacing.x=unit(1.2, "lines"),panel.spacing.y=unit(.5, "lines"))
+```
+
+
+
+
